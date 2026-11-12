@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Apuração Prêmio Nestlé</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Comic+Neue:wght@700&display=swap">
+  <style>
+    :root {
+      --bg: #0d0016;
+      --card: #1a0630;
+      --opt: #2b0b4a;
+      --lime: #c6ff00;
+      --pink: #ff2bd6;
+      --cyan: #00e5ff;
+      --yellow: #ffe600;
+      --soft: #d9c6ff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+    html, body { height: 100%; overflow: hidden }
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Comic Neue', 'Comic Sans MS', system-ui, sans-serif;
+      font-weight: 700;
+      user-select: none;
+    }
+    body.idle { cursor: none }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(60vmax 60vmax at 10% 0%, rgba(255,43,214,.35), transparent 60%),
+        radial-gradient(60vmax 60vmax at 100% 30%, rgba(0,229,255,.25), transparent 60%),
+        radial-gradient(60vmax 60vmax at 30% 100%, rgba(198,255,0,.18), transparent 60%);
+      animation: bgshift 8s ease-in-out infinite alternate;
+    }
+    body::after { /* scanlines CRT */
+      content: ''; position: fixed; inset: 0; z-index: 50; pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+    }
+    @keyframes bgshift { to { filter: hue-rotate(80deg) } }
+
+    /* Palco desenhado pra 1080 de altura, escalado e esticado (via JS) pra ocupar a janela inteira */
+    #stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; z-index: 2; display: flex; flex-direction: column }
+
+    .strip { flex: none; overflow: hidden; background: #000; border-bottom: 5px solid var(--lime) }
+    .strip-track { display: flex; gap: 4px; width: max-content; will-change: transform }
+    .strip-track img { flex: none; height: 100px; width: auto; display: block; filter: saturate(1.4) contrast(1.1) }
+    .ticker { flex: none; overflow: hidden; white-space: nowrap; background: var(--pink); color: #000; font-family: 'Bungee', sans-serif; font-size: 24px; padding: 8px 0; border-bottom: 5px solid #000 }
+    .ticker-track { display: inline-block; animation: slide 40s linear infinite }
+    @keyframes slide { to { transform: translateX(-50%) } }
+
+    #slide { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; padding: 30px 90px; text-align: center }
+    .progress { position: absolute; right: 36px; bottom: 22px; font-family: 'Bungee', sans-serif; font-size: 26px; color: var(--cyan); text-shadow: 2px 2px 0 #000 }
+
+    .tag { display: inline-block; font-family: 'Bungee', sans-serif; font-size: 30px; background: var(--cyan); color: #000; padding: 8px 20px; transform: rotate(-2deg) }
+    .big { font-family: 'Anton', Impact, sans-serif; font-weight: 400; text-transform: uppercase; line-height: 1; color: var(--lime); text-shadow: 6px 6px 0 #000 }
+    .sub { font-family: 'Bungee', sans-serif; font-size: 34px; color: var(--cyan); text-shadow: 3px 3px 0 #000 }
+    .hint { font-family: 'Bungee', sans-serif; font-size: 30px; color: var(--yellow); text-shadow: 3px 3px 0 #000; animation: blink 1.1s steps(2) infinite }
+    @keyframes blink { 50% { opacity: .25 } }
+
+    .logobox { display: grid; place-items: center; padding: 10px 16px; background: #fff; border: 5px solid #000; box-shadow: 7px 7px 0 var(--pink); transform: rotate(-4deg) }
+    .logobox img { height: 130px; display: block }
+    .year { font-family: 'Bungee', sans-serif; font-size: 40px; background: var(--yellow); color: #000; padding: 4px 22px; border: 5px solid #000; transform: rotate(-5deg); box-shadow: 6px 6px 0 var(--pink) }
+    .glitch { text-shadow: 6px 0 var(--pink), -6px 0 var(--cyan); color: #fff; animation: glitch 2.4s infinite }
+    @keyframes glitch {
+      0%, 90%, 100% { transform: none; text-shadow: 6px 0 var(--pink), -6px 0 var(--cyan) }
+      92% { transform: translate(-8px, 4px) skewX(6deg); text-shadow: -10px 0 var(--pink), 10px 0 var(--cyan) }
+      94% { transform: translate(8px, -4px); text-shadow: 10px 0 var(--lime), -10px 0 var(--pink) }
+      96% { transform: translate(-4px, 0) skewX(-6deg) }
+    }
+
+    .count { font-family: 'Anton', Impact, sans-serif; font-size: 420px; line-height: 1; color: var(--yellow); text-shadow: 10px 10px 0 var(--pink), 20px 20px 0 #000 }
+    @media (prefers-reduced-motion: no-preference) { .count { animation: shake .15s infinite } }
+    @keyframes shake { 0% { transform: translate(0, 0) rotate(-2deg) } 50% { transform: translate(8px, -8px) rotate(2deg) } 100% { transform: translate(-8px, 5px) rotate(-1deg) } }
+
+    .rank { --rh: 140px; width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 14px }
+    .row { height: var(--rh); display: flex; align-items: center; gap: 28px; padding: 0 30px; background: var(--opt); border: 5px solid #000; text-align: left }
+    .row.first { background: var(--yellow); color: #000; box-shadow: 10px 10px 0 var(--pink) }
+    .pos { flex: none; width: calc(var(--rh) * .9); font-family: 'Anton', Impact, sans-serif; font-size: clamp(30px, calc(var(--rh) * .5), 76px); color: var(--lime); text-shadow: 3px 3px 0 #000 }
+    .first .pos { color: #000; text-shadow: none }
+    .av { flex: none; width: calc(var(--rh) * .78); height: calc(var(--rh) * .78); border: 4px solid #000; background: #000; display: grid; place-items: center; font-size: calc(var(--rh) * .4); overflow: hidden }
+    .av img { width: 100%; height: 100%; object-fit: cover; display: block }
+    .nm { flex: 1; min-width: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(26px, calc(var(--rh) * .46), 68px); text-transform: uppercase; overflow-wrap: anywhere; line-height: 1.05 }
+    .tie { display: inline-block; vertical-align: middle; margin-left: 16px; font-family: 'Bungee', sans-serif; font-size: 24px; background: var(--pink); color: #000; border: 3px solid #000; padding: 2px 12px; transform: rotate(-3deg) }
+    .vt { flex: none; font-family: 'Bungee', sans-serif; font-size: clamp(24px, calc(var(--rh) * .3), 42px) }
+    .row.mystery { background: var(--card); border-style: dashed; border-color: var(--yellow); color: var(--soft) }
+    .row.mystery.pulse { animation: blink 1.1s steps(2) infinite }
+    .row.mystery .pos { color: var(--yellow) }
+
+    /* Walkout (1º lugar de categoria com mais de 3 indicados) */
+    #slide { position: relative }
+    .wo { position: absolute; inset: 0; z-index: 20; background: #000; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px }
+    .rays { position: absolute; left: 50%; top: 50%; width: 2800px; height: 2800px; margin: -1400px 0 0 -1400px; opacity: 0; animation: spin 14s linear infinite;
+      background: repeating-conic-gradient(rgba(198,255,0,.55) 0 5deg, transparent 5deg 15deg);
+      -webkit-mask: radial-gradient(circle, #000 0 12%, transparent 58%); mask: radial-gradient(circle, #000 0 12%, transparent 58%) }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .wo-txt { position: relative; min-height: 120px; font-family: 'Anton', Impact, sans-serif; font-size: 110px; line-height: 1; text-transform: uppercase; color: var(--lime); text-shadow: 6px 6px 0 #000, 0 0 40px rgba(198,255,0,.7) }
+    .wo-row { position: relative; display: flex; gap: 50px; align-items: center }
+    .wo-row.sil .av { filter: brightness(0); box-shadow: 0 0 70px 10px var(--lime); border-color: var(--lime) }
+    .wo-clues { position: relative; display: flex; gap: 40px; min-height: 90px }
+    .chip { font-family: 'Bungee', sans-serif; font-size: 46px; background: var(--cyan); color: #000; border: 5px solid #000; padding: 10px 30px; box-shadow: 8px 8px 0 var(--pink) }
+    .wo-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none }
+    .hcard { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 26px 44px 30px; background: var(--yellow); color: #000; border: 8px solid #000; box-shadow: 14px 14px 0 var(--pink) }
+    .hname { font-family: 'Anton', Impact, sans-serif; font-size: 130px; line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; text-align: center }
+    .hname.small { font-size: 64px }
+    .hcard .vt { font-size: 48px }
+    .nada { font-family: 'Bungee', sans-serif; font-size: 40px; color: var(--soft) }
+
+    /* Confete (mesma ideia do index) */
+    .fall { will-change: transform; position: fixed; top: -60px; z-index: 100; pointer-events: none; animation: fall linear forwards }
+    .fall.n67 { font-family: 'Bungee', sans-serif; color: var(--lime); text-shadow: 2px 2px 0 #000 }
+    @keyframes fall { to { transform: translateY(115vh) rotate(720deg) } }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div class="strip"><div class="strip-track" id="strip"></div></div>
+    <div class="ticker"><span class="ticker-track" id="ticker"></span></div>
+    <div id="slide"></div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // ═══ DADOS ══════════════════════════════════════════════════════════════
+    // Só contagens por opção (sem nome de quem votou). Gerado por scripts/gerar-resultados.py a partir da planilha.
+    // <RESULTADOS>
+    const RESULTADOS = {
+      "votantes": 19,
+      "categorias": {
+        "premio_saka": {
+          "Henricão": 11,
+          "Dodo": 5,
+          "Joe": 3
+        },
+        "premio_ceo": {
+          "Luiz (mas com dúvidas)": 13,
+          "Luiz, obviamente": 6
+        },
+        "premio_piscineira": {
+          "Piscini": 19
+        },
+        "casal_ano": {
+          "Reche e Gabi": 9,
+          "Samuel e Feh Mel": 9,
+          "Júlio e Allana": 1
+        },
+        "golden_boy": {
+          "Flores": 11,
+          "Eric": 8
+        },
+        "fioti_ano": {
+          "João Calado": 12,
+          "Samuel": 6,
+          "Eric": 1
+        },
+        "resenha_ano": {
+          "Piscininha": 5,
+          "Live avaliando insta": 5,
+          "Bet do Samuca": 4,
+          "Maquinhos de olho da A3": 3,
+          "Unfollow do Sam na Feh": 2
+        },
+        "versao_acacio": {
+          "Aggacio": 7,
+          "Homem das cavernacio": 5,
+          "Gordacio": 3,
+          "Emacio": 2,
+          "Acacio": 1,
+          "Mineracio": 1
+        },
+        "story_samuca": {
+          "Pose c mão no bolso": 17,
+          "Selfie com maxilar": 1,
+          "Foto dirigindo": 1
+        },
+        "amiga_ano": {
+          "Maricota": 15,
+          "Gabi Reche": 3,
+          "Feh Mel": 1
+        },
+        "pior_amigo": {
+          "Victinho": 8,
+          "Henricão": 4,
+          "Samuel": 2,
+          "João Calado": 2,
+          "Joe": 1,
+          "Lucas": 1,
+          "Neguinho": 1
+        },
+        "amigo_ano": {
+          "Samuel": 8,
+          "Gsantos": 3,
+          "João Calado": 2,
+          "Dodo": 2,
+          "Neguinho": 1,
+          "Reche": 1,
+          "Lucas": 1,
+          "Luiz": 1
+        },
+        "premio_neve": {
+          "Gsantos e Lucas": 13,
+          "Samuel e Acácio": 6
+        }
+      }
+    };
+    // </RESULTADOS>
+
+    // ═══ CONFIGURAÇÃO ═══════════════════════════════════════════════════════
+    const ANO = 2026;
+    const AVATAR_DIR = 'img/avatars/';
+    // Faixa de fotos do topo (mesma do index.html): a lista tem que acompanhar a pasta img/avatars e as miniaturas em img/thumbs
+    const PHOTOS = Array.from({ length: 13 }, (_, i) => 'img/p' + String(i + 1).padStart(2, '0') + '.jpg');
+    const AVATAR_FILES = [
+      'acacio', 'bet-do-samuca', 'braga', 'davi', 'dodo', 'eric',
+      'feh-mel', 'flores', 'foto-dirigindo', 'foto-na-academia', 'gabi-reche', 'gsantos',
+      'gsantos-e-lucas', 'henricao', 'iris-seguindo-nois', 'joao-calado', 'joe', 'julio',
+      'julio-e-allana', 'leo-e-degaut', 'leomo', 'live-avaliando-insta', 'lucas', 'luiz',
+      'luiz-poncho', 'maricota', 'neguinho', 'pedro-neves', 'piscini', 'piscininha',
+      'pose-c-mao-no-bolso', 'reche', 'reche-e-gabi', 'samuel', 'samuel-e-acacio', 'samuel-e-feh-mel',
+      'selfie-com-maxilar', 'unfollow-do-sam-na-feh', 'victinho',
+      'ia-original', 'ia-emacio', 'ia-baldacio', 'ia-fazendacio', 'ia-mineracio', 'ia-gordacio', 'ia-homem-das-cavernacio', 'ia-medicacio', 'ia-acacio'];
+    const LARP_PHOTOS = ['img/larp1.jpg', 'img/larp2.jpg', 'img/larp3.jpg'];
+    const STRIP_PHOTOS = PHOTOS.concat(AVATAR_FILES.map((f) => AVATAR_DIR + f + '.jpg'), LARP_PHOTOS);
+    const thumb = (p) => 'img/thumbs/' + p.split('/').pop();
+    // A ordem desta lista é a ordem dos slides (a partir da 7ª ela difere da ordem do formulário em index.html).
+    // rapido = suspense de 1s em vez de 3s (resultado óbvio: CEO e Piscineira)
+    // walkout = duração total, em segundos, do walkout do 1º lugar (categorias com mais de 3 opções votadas ou com empate no 1º); padrão WALKOUT_S
+    // av = nome do arquivo em img/avatars quando difere do nome da opção sem acento (ex.: 'Luiz, obviamente' -> luiz)
+    const CATEGORIES = [
+      { key: 'premio_saka', tag: 'SAKA MODE', title: 'Prêmio SAKA' },
+      { key: 'premio_ceo', tag: 'CEO MODE', title: 'Prêmio CEO', rapido: true, av: { 'Luiz, obviamente': 'luiz', 'Luiz (mas com dúvidas)': 'luiz-poncho' } },
+      { key: 'premio_piscineira', tag: 'MODO PISCINA', title: 'Prêmio Piscineira', rapido: true },
+      { key: 'casal_ano', tag: 'ROMANCE ARC', title: 'Casal do Ano' },
+      { key: 'golden_boy', tag: 'MEWING LVL 100', title: 'Golden Boy' },
+      { key: 'fioti_ano', tag: 'CRINGE LVL MÁXIMO', title: 'Fioti do Ano' },
+      { key: 'premio_neve', tag: 'MODO GELO', title: 'Prêmio Neve do Ano', av: { 'Gsantos e Lucas': 'gsantos-e-lucas', 'Samuel e Acácio': 'samuel-e-acacio' } },
+      { key: 'versao_acacio', walkout: 5, tag: 'MULTIVERSO', title: 'Versão do AcacIA', av: { 'Aggacio': 'ia-original', 'Emacio': 'ia-emacio', 'Baldacio': 'ia-baldacio', 'Fazendacio': 'ia-fazendacio', 'Mineracio': 'ia-mineracio', 'Gordacio': 'ia-gordacio', 'Homem das cavernacio': 'ia-homem-das-cavernacio', 'Medicacio': 'ia-medicacio', 'Acacio': 'ia-acacio' } },
+      { key: 'story_samuca', tag: 'LORE DO ANO', title: 'Story do Samuca do Ano' },
+      { key: 'pior_amigo', walkout: 5, tag: 'NPC DETECTED', title: 'Pior Amigo Nestlé do Ano' },
+      { key: 'amiga_ano', tag: 'RIZZ SUPREMO', title: 'AmigA Nestlé do Ano' },
+      { key: 'resenha_ano', tag: 'ARQUIVO CLASSIFICADO', title: 'Resenha do Ano' },
+      { key: 'amigo_ano', tag: 'AURA INFINITA', title: 'Amigo Nestlé do Ano' },
+    ];
+    const TICKER = ['NESTLÉ', 'APURAÇÃO', 'AURA', 'SIGMA', 'OHIO', 'SKIBIDI', 'FANUM TAX', 'RIZZ', 'MEWING', 'NPC', 'TÁ LIBERADO', 'SIX SEVEN', '67', 'LARP', 'TUNG TUNG SAHUR', 'SAHUR'];
+    const SUSPENSE = ['Contando os votos…', 'Será que foi ele?', 'A aura decide…'];
+    const SUSPENSE_MS = 1000;   // tempo de cada número da contagem
+    const WALKOUT_S = 10;       // duração padrão do walkout
+    const REVEAL_GAP = 0.9;     // segundos entre uma linha e a seguinte na revelação
+    // ════════════════════════════════════════════════════════════════════════
+
+    const N = CATEGORIES.length;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const G = !reduce && window.gsap;
+    const $ = (s) => document.querySelector(s);
+    const state = { i: 0, ph: 'espera' };   // i: 0 abertura, 1..N categorias, N+1 fim | ph (categorias): espera, suspense, revela
+    let tl = null, timer = null;
+
+    function h(tag, attrs, ...kids) {
+      const e = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (k === 'class') e.className = v;
+        else if (k === 'text') e.textContent = v;
+        else e.setAttribute(k, v);
+      }
+      for (const c of kids.flat()) { if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); }
+      return e;
+    }
+    const slug = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+
+    // ── Palco: escala pelo menor lado e estica o outro pra ocupar a janela toda ──
+    function fit() {
+      const s = Math.min(innerWidth / 1920, innerHeight / 1080), st = $('#stage').style;
+      st.width = innerWidth / s + 'px'; st.height = innerHeight / s + 'px';
+      st.transform = 'scale(' + s + ')';
+    }
+    addEventListener('resize', fit); fit();
+    $('#ticker').textContent = (TICKER.join('  •  ') + '  •  ').repeat(8);
+
+    // Faixa de fotos: ordem aleatória, sem repetir a mesma foto nas 3 seguintes, rolagem infinita (mesma lógica do index.html)
+    (function initStrip() {
+      const strip = $('#strip');
+      const ratios = [], recent = [], queue = [];
+      const SPEED = 60, GAP = 4;   // px/s e px
+      let pending = STRIP_PHOTOS.length;
+      function pick() {
+        const pool = STRIP_PHOTOS.map((_, i) => i).filter((i) => !recent.includes(i));
+        const i = pool[Math.floor(Math.random() * pool.length)];
+        recent.push(i); if (recent.length > 3) recent.shift();
+        return i;
+      }
+      function mk() {
+        const i = pick();
+        queue.push(ratios[i]);
+        return h('img', { src: thumb(STRIP_PHOTOS[i]), alt: '', decoding: 'async', style: 'aspect-ratio:' + ratios[i] });
+      }
+      function start() {
+        const H = 100;   // altura das fotos (fixa)
+        let offset = 0, last = performance.now();
+        const widthOf = (r) => r * H + GAP;
+        const fill = () => {
+          const view = $('#stage').clientWidth;   // largura do palco muda com a janela
+          let t = queue.reduce((a, r) => a + widthOf(r), 0);
+          while (t - offset < view * 2 + 400) { strip.append(mk()); t += widthOf(queue[queue.length - 1]); }
+        };
+        fill();
+        function frame(now) {
+          offset += Math.min(now - last, 100) / 1000 * SPEED; last = now;
+          while (queue.length > 1 && offset >= widthOf(queue[0])) { offset -= widthOf(queue.shift()); strip.firstElementChild.remove(); }
+          fill();
+          strip.style.transform = 'translate3d(' + (-offset) + 'px,0,0)';
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
+      STRIP_PHOTOS.forEach((p, i) => {
+        const im = new Image();
+        const done = () => { ratios[i] = im.naturalWidth && im.naturalHeight ? im.naturalWidth / im.naturalHeight : 1; if (!--pending) start(); };
+        im.onload = done; im.onerror = done; im.src = thumb(p);
+      });
+    })();
+
+    // ── Ranking: top 3 + quem empata no corte; empatados dividem a posição (1, 1, 3) ──
+    function ranking(votos) {
+      const ord = Object.entries(votos).sort((a, b) => b[1] - a[1]);
+      const out = []; let pos = 0, last = null;
+      ord.forEach(([nome, v], i) => { if (v !== last) { pos = i + 1; last = v; } out.push({ nome, v, pos }); });
+      return out.filter((x) => x.pos <= 3);
+    }
+
+    function avatar(cat, nome) {
+      const av = h('span', { class: 'av', text: '🗿' });
+      const img = new Image();
+      img.alt = '';
+      img.onload = () => { av.textContent = ''; av.append(img); };
+      img.src = AVATAR_DIR + ((cat.av && cat.av[nome]) || slug(nome)) + '.jpg';
+      return av;
+    }
+
+    function confetti() {
+      if (reduce) return;
+      const em = ['🎉', '🗿', '💀', '🔥', '🏆', '✨', '🐐', '🪺', '🤷', '6️⃣7️⃣', '🥁', '🪵'];
+      for (let i = 0; i < 60; i++) {
+        const word = i % 10 === 0 ? '67' : i % 10 === 5 ? 'LARP' : null;
+        const f = h('span', { class: 'fall' + (word ? ' n67' : ''), text: word || em[i % em.length] });
+        f.style.left = Math.random() * 100 + 'vw';
+        f.style.fontSize = 30 + Math.random() * 30 + 'px';
+        f.style.animationDuration = 2.5 + Math.random() * 2.5 + 's';
+        f.style.animationDelay = Math.random() * 1.2 + 's';
+        f.addEventListener('animationend', () => f.remove());
+        document.body.append(f);
+      }
+    }
+
+    // ── Slides ────────────────────────────────────────────────────────────
+    function slideAbertura() {
+      return [
+        h('div', { class: 'logobox' }, h('img', { src: 'img/nestle-logo.png', alt: 'Nestlé' })),
+        h('div', { class: 'big glitch', style: 'font-size:200px', text: 'Apuração' }),
+        h('div', { class: 'year', text: String(ANO) }),
+        h('div', { class: 'sub', text: plural(RESULTADOS.votantes, 'pessoa votou', 'pessoas votaram') }),
+        h('div', { class: 'hint', text: 'Espaço pra começar' }),
+      ];
+    }
+    function slideFim() {
+      return [
+        h('div', { class: 'big', style: 'font-size:230px', text: 'Fim' }),
+        h('div', { class: 'sub', text: 'Parabéns aos vencedores. A aura é de vocês.' }),
+      ];
+    }
+    function slideEspera(cat) {
+      const votos = RESULTADOS.categorias[cat.key] || {};
+      const cands = Object.keys(votos).length, total = Object.values(votos).reduce((a, b) => a + b, 0);
+      const info = cands === 0 ? 'Ninguém votou' : plural(total, 'voto', 'votos') + ' • ' + (cands <= 3 ? plural(cands, 'candidato', 'candidatos') : 'top 3 de ' + cands + ' candidatos');
+      return [
+        h('div', { class: 'tag', text: cat.tag }),
+        h('div', { class: 'big', style: 'font-size:190px', text: cat.title }),
+        h('div', { class: 'sub', text: info }),
+        h('div', { class: 'hint', text: 'Espaço pra revelar' }),
+      ];
+    }
+    function slideSuspense(cat) {
+      const steps = cat.rapido ? 1 : SUSPENSE.length;
+      const num = h('div', { class: 'count', text: String(steps) }), fr = h('div', { class: 'sub', text: SUSPENSE[0] });
+      let k = steps;
+      timer = setInterval(() => {
+        k--;
+        if (k <= 0) { clearInterval(timer); timer = null; state.ph = 'revela'; render(); return; }
+        num.textContent = k; fr.textContent = SUSPENSE[steps - k] || '';
+      }, SUSPENSE_MS);
+      return [h('div', { class: 'big', style: 'font-size:90px', text: cat.title }), num, fr];
+    }
+    // parcial: categoria com mais de 3 indicados, só 2º e 3º lugares (o 1º fica escondido atrás de um "???")
+    function slideRevela(cat, instant, parcial) {
+      const rk = ranking(RESULTADOS.categorias[cat.key] || {});
+      const head = h('div', { class: 'big', style: 'font-size:100px', text: cat.title });
+      if (!rk.length) return [head, h('div', { class: 'nada', text: 'Ninguém votou nessa' })];
+      const box = h('div', { class: 'rank' });
+      box.style.setProperty('--rh', Math.min(140, Math.floor(640 / rk.length) - 14) + 'px');
+      // Com animação, o "???" e o aviso só aparecem depois que o 2º lugar já entrou
+      const tarde = parcial && !instant && G;
+      const q = h('div', { class: 'row mystery' + (tarde ? '' : ' pulse') }, h('div', { class: 'pos', text: '1º' }), h('span', { class: 'av', text: '❓' }), h('div', { class: 'nm', text: '???' }), h('div', { class: 'vt', text: '? votos' }));
+      const aviso = h('div', { class: 'hint', text: 'Espaço pro 1º lugar' });
+      if (tarde) { q.style.visibility = 'hidden'; aviso.style.visibility = 'hidden'; }
+      if (parcial) box.append(q);
+      const rows = rk.filter((x) => !parcial || x.pos !== 1).map((x) => {
+        const row = h('div', { class: 'row' + (x.pos === 1 ? ' first' : '') });
+        const nm = h('div', { class: 'nm', text: x.nome });
+        if (rk.filter((y) => y.pos === x.pos).length > 1) nm.append(h('span', { class: 'tie', text: 'EMPATE' }));
+        row.append(h('div', { class: 'pos', text: x.pos + 'º' }), avatar(cat, x.nome), nm, h('div', { class: 'vt', text: plural(x.v, 'voto', 'votos') }));
+        box.append(row);
+        return row;
+      });
+      const kids = parcial ? [head, box, aviso] : [head, box];
+      // Entrada do último colocado até o 1º; o confete sai junto com o 1º lugar (na parcial, o 1º vem depois, no walkout)
+      if (instant) return kids;
+      if (G) {
+        tl = G.timeline();
+        [...rows].reverse().forEach((row, idx) => {
+          tl.from(row, { scale: 0, rotation: -6, opacity: 0, duration: .5, ease: 'back.out(2)', clearProps: 'transform,opacity' }, idx * REVEAL_GAP);
+        });
+        if (parcial) {
+          const at = rows.length * REVEAL_GAP;
+          tl.call(() => { q.style.visibility = ''; q.classList.add('pulse'); aviso.style.visibility = ''; }, null, at);
+          tl.from(q, { scale: 0, rotation: -6, opacity: 0, duration: .5, ease: 'back.out(2)', clearProps: 'transform,opacity' }, at);
+        } else {
+          tl.call(confetti, null, (rows.length - 1) * REVEAL_GAP);
+        }
+      } else if (!parcial) {
+        confetti();
+      }
+      return kids;
+    }
+
+    // Walkout (estilo FIFA): tela escura com raios, silhueta + pistas do vencedor, flash e a carta do 1º lugar
+    function bigAvatar(cat, nome, px) {
+      const a = avatar(cat, nome);
+      a.style.width = a.style.height = px + 'px';
+      a.style.fontSize = px * .4 + 'px';
+      return a;
+    }
+    function slideWalkout(cat) {
+      const win = ranking(RESULTADOS.categorias[cat.key]).filter((x) => x.pos === 1);
+      const [head, box] = slideRevela(cat, true, true);
+      const rays = h('div', { class: 'rays' }), txt = h('div', { class: 'wo-txt' }), palco = h('div', { class: 'wo-row sil' }),
+        clues = h('div', { class: 'wo-clues' }), flash = h('div', { class: 'wo-flash' });
+      const ov = h('div', { class: 'wo' }, rays, txt, palco, clues, flash);
+      const empate = win.length > 1;
+      const tam = win.length > 2 ? 240 : empate ? 300 : 380;   // tamanho da foto na carta final
+      // Empate no 1º: a construção finge que é um vencedor só (uma silhueta, sem pista) e o empate é a surpresa do flash
+      palco.append(bigAvatar(cat, win[0].nome, 320));
+      const chips = empate ? [] : [h('div', { class: 'chip', text: win[0].nome.replace(/[^\p{L}]/gu, '').length + ' LETRAS' })];
+      chips.forEach((c) => clues.append(c));
+
+      const say = (t, at) => {
+        tl.call(() => { txt.textContent = t; }, null, at);
+        tl.fromTo(txt, { scale: .6, opacity: 0 }, { scale: 1, opacity: 1, duration: .35, ease: 'back.out(2)' }, at);
+      };
+      const FLASH = 6.3;   // segundo em que o flash revela o vencedor
+      tl = G.timeline({ onComplete: () => { state.ph = 'revela'; render(true); } });
+      tl.fromTo(ov, { opacity: 0 }, { opacity: 1, duration: .5 }, 0);
+      tl.to(rays, { opacity: .5, duration: 2.2 }, .6).to(rays, { opacity: 1, duration: 3 }, 3);
+      tl.fromTo(palco, { opacity: 0, y: 80, scale: .7 }, { opacity: 1, y: 0, scale: 1, duration: .7, ease: 'back.out(1.7)' }, 2.4);
+      chips.forEach((c, k) => tl.fromTo(c, { scale: 0, rotation: -12, opacity: 0 }, { scale: 1, rotation: -2, opacity: 1, duration: .5, ease: 'back.out(2.5)' }, 3.8 + k * 1.3));
+      say(empate ? 'QUEM SERÁ O PRIMEIRO?' : 'QUEM SERÁ?', 3.8 + chips.length * 1.3);
+      tl.to(flash, { opacity: 1, duration: .12 }, FLASH).to(flash, { opacity: 0, duration: .5 }, FLASH + .12);
+      tl.call(() => {
+        txt.textContent = empate ? 'EMPATE!' : ''; clues.textContent = ''; palco.classList.remove('sil'); palco.textContent = '';
+        win.forEach((x) => {
+          palco.append(h('div', { class: 'hcard' }, h('div', { class: 'tag', text: empate ? 'EMPATE NO 1º LUGAR 🏆' : '1º LUGAR 🏆' }), bigAvatar(cat, x.nome, tam),
+            h('div', { class: 'hname' + (empate ? ' small' : ''), text: x.nome }), h('div', { class: 'vt', text: plural(x.v, 'voto', 'votos') })));
+        });
+        G.from(palco.children, { scale: .2, rotation: -10, opacity: 0, duration: .8, ease: 'elastic.out(1, .5)' });
+        if (empate) G.fromTo(txt, { scale: .3, opacity: 0 }, { scale: 1, opacity: 1, duration: .6, ease: 'elastic.out(1, .5)' });
+        confetti();
+      }, null, FLASH + .1);
+      tl.fromTo(ov, { x: -16 }, { x: 0, duration: .6, ease: 'elastic.out(1, .2)' }, FLASH + .1);
+      tl.to(ov, { opacity: 0, duration: .6 }, FLASH + 3.4);
+      tl.timeScale(tl.duration() / (cat.walkout || WALKOUT_S));   // encaixa a linha do tempo na duração da categoria
+      return [head, box, ov];
+    }
+
+    function render(instant) {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (tl) { tl.kill(); tl = null; }
+      const { i, ph } = state, cat = CATEGORIES[i - 1];
+      const kids = i === 0 ? slideAbertura() : i > N ? slideFim()
+        : ph === 'espera' ? slideEspera(cat) : ph === 'suspense' ? slideSuspense(cat)
+        : ph === 'p23' ? slideRevela(cat, instant, true) : ph === 'walkout' ? slideWalkout(cat) : slideRevela(cat, instant);
+      $('#slide').replaceChildren(...kids);
+      $('#progress').textContent = i >= 1 && i <= N ? i + ' / ' + N : '';
+      if (i > N && !instant) confetti();
+    }
+
+    // Walkout pro 1º (3º e 2º entram antes, sem suspense) quando tem mais de 3 indicados ou empate no 1º lugar
+    const dramatico = (cat) => {
+      const votos = RESULTADOS.categorias[cat.key] || {};
+      return Object.keys(votos).length > 3 || ranking(votos).filter((x) => x.pos === 1).length > 1;
+    };
+
+    function next() {
+      const { i, ph } = state;
+      let instant = false;
+      if (i === 0) { state.i = 1; state.ph = 'espera'; }
+      else if (i > N) return;
+      else if (ph === 'espera') state.ph = dramatico(CATEGORIES[i - 1]) ? 'p23' : 'suspense';
+      else if (ph === 'p23') state.ph = G ? 'walkout' : 'revela';   // sem GSAP (ou movimento reduzido) pula o walkout
+      else if (ph === 'suspense') state.ph = 'revela';
+      else if (ph === 'walkout') { state.ph = 'revela'; instant = true; }   // pulou o walkout: vai direto pro ranking final
+      else { state.i = i + 1; state.ph = 'espera'; }
+      render(instant);
+    }
+    function prev() {
+      const { i, ph } = state;
+      if (i === 0) return;
+      if (i > N) { state.i = N; state.ph = 'revela'; render(true); return; }
+      if (dramatico(CATEGORIES[i - 1]) && (ph === 'revela' || ph === 'walkout')) { state.ph = 'p23'; render(true); return; }
+      if (ph !== 'espera') { state.ph = 'espera'; render(); return; }
+      if (i === 1) { state.i = 0; render(); return; }
+      state.i = i - 1; state.ph = 'revela'; render(true);   // categoria anterior já revelada, sem repetir a animação
+    }
+
+    // ── Controles (PC): teclado e mouse ───────────────────────────────────
+    addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      const k = e.key;
+      if (k === ' ' || k === 'Enter' || k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); if (!e.repeat) next(); }
+      else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); if (!e.repeat) prev(); }
+      else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); }
+    });
+    addEventListener('click', (e) => { if (e.button === 0) next(); });
+
+    // Cursor some depois de uns segundos parado
+    let idle;
+    const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3000); };
+    addEventListener('mousemove', wake); wake();
+
+    render();
+  })();
+  </script>
+</body>
+</html>
