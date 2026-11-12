@@ -157,17 +157,31 @@
     .options.pics .av { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; border: 0; border-bottom: 3px solid #000; font-size: 64px }
     .options.pics .nm { padding: 8px 6px; font-size: 19px }
     .options.pics .ck { position: absolute; top: 6px; right: 6px; margin: 0; padding: 3px 6px; background: var(--lime); border: 2px solid #000; transform: rotate(6deg) }
-    /* 1 ou 2 opções: as fotos esticam pra ocupar a altura que sobra, sem scroll */
-    .options.pics.duo, .options.pics.solo, .options.pics.linha { align-content: stretch; grid-template-rows: minmax(0, 1fr) }
-    .options.pics.duo .av, .options.pics.solo .av, .options.pics.linha .av { flex: 1 1 0; min-height: 0; height: auto; aspect-ratio: auto }
-    .options.pics.duo .av img, .options.pics.solo .av img, .options.pics.linha .av img { object-position: 50% 25% }
+    .options.pics .av img { object-position: 50% 25% }
+    /* PC/tablet, 1 a 3 opções: as fotos esticam pra ocupar a altura que sobra, sem scroll. No celular ficam quadradas (foto inteira) */
+    @media (min-width: 701px) {
+      .options.pics.duo, .options.pics.solo, .options.pics.linha { align-content: stretch; grid-template-rows: minmax(0, 1fr) }
+      .options.pics.duo .av, .options.pics.solo .av, .options.pics.linha .av { flex: 1 1 0; min-height: 0; height: auto; aspect-ratio: auto }
+    }
     /* 3 por linha: 3 opções (cabem numa linha só), múltiplos de 3 e qualquer quantidade acima de 4. 2 e 4 opções ficam com 2 por linha */
     .options.pics.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px }
     @media (max-width: 700px) {
       .options.pics.c3 .nm { font-size: 16px; padding: 6px 4px }
       .options.pics.c3 .ck { font-size: 8px; padding: 2px 4px }
+      /* 6 opções no celular: 2-2-2 */
+      .options.pics.m2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px }
+      .options.pics.c3.m2 .nm { font-size: 19px; padding: 8px 6px }
+      .options.pics.c3.m2 .ck { font-size: 10px; padding: 3px 6px }
     }
+
+    /* aviso de que a lista rola (no celular a barra de rolagem some) */
+    .optwrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative }
+    .more { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; pointer-events: none; opacity: 0; transition: opacity .2s;
+      background: linear-gradient(to top, var(--card) 20%, rgba(26,6,48,0)); font-family: 'Bungee', sans-serif; font-size: 11px; color: var(--lime); text-shadow: 1px 1px 0 #000 }
+    .more.show { opacity: 1; animation: nudge 1.1s ease-in-out infinite }
+    @keyframes nudge { 50% { transform: translateY(-3px) } }
     .options.pics.solo { grid-template-columns: minmax(0, 260px); justify-content: center }
+    @media (max-width: 700px) { .options.pics.solo { grid-template-columns: minmax(0, 200px) } }
     @media (min-width: 900px) {
       .options.pics .nm { font-size: 22px }
     }
@@ -361,7 +375,7 @@
       { key: 'golden_boy', tag: 'MEWING LVL 100', title: 'Golden Boy', desc: 'Flores ou Eric. Escolhe sem pensar.', type: 'radio', options: ['Flores', 'Eric'], photo: 6, cap: 'MEWING', emojis: ['🌟', '🏅'] },
       { key: 'fioti_ano', tag: 'CRINGE LVL MÁXIMO', title: 'Fioti do Ano', desc: 'Escolhe um dos três.', type: 'radio', options: ['João Calado', 'Eric', 'Samuel'], photo: 10, cap: 'CRINGE', emojis: ['🤡', '💀', '🗿'] },
       { key: 'resenha_ano', tag: 'ARQUIVO CLASSIFICADO', title: 'Resenha do Ano', desc: 'Qual resenha entrou pra história? Escolhe o rolê.', type: 'radio', options: ['Unfollow do Sam na Feh', 'Live avaliando insta', 'Iris seguindo nois', 'Bet do Samuca', 'Piscininha', 'Maquinhos de olho da A3'], photo: 10, cap: 'LORE DROP', emojis: ['📉', '📱', '👀', '🎰', '🏊', '👁️'] },
-      { key: 'versao_acacio', tag: 'MULTIVERSO', title: 'Versão do AcacIA', em: 'IA', desc: 'Qual versão do Acácio foi a melhor? Escolhe uma.', type: 'radio', options: [{ v: 'Niggacio', a: 'ia-original' }, { v: 'Emacio', a: 'ia-emacio' }, { v: 'Baldacio', a: 'ia-baldacio' }, { v: 'Fazendacio', a: 'ia-fazendacio' }, { v: 'Mineracio', a: 'ia-mineracio' }, { v: 'Gordacio', a: 'ia-gordacio' }, { v: 'Homem das cavernacio', a: 'ia-homem-das-cavernacio' }, { v: 'Medicacio', a: 'ia-medicacio' }, { v: 'Acacio', a: 'ia-acacio' }], photo: 1, cap: 'ACACIA', emojis: ['🤖', '🎭', '✨'] },
+      { key: 'versao_acacio', tag: 'MULTIVERSO', title: 'Versão do AcacIA', em: 'IA', desc: 'Qual versão do Acácio foi a melhor? Escolhe uma.', type: 'radio', options: [{ v: 'Aggacio', a: 'ia-original' }, { v: 'Emacio', a: 'ia-emacio' }, { v: 'Baldacio', a: 'ia-baldacio' }, { v: 'Fazendacio', a: 'ia-fazendacio' }, { v: 'Mineracio', a: 'ia-mineracio' }, { v: 'Gordacio', a: 'ia-gordacio' }, { v: 'Homem das cavernacio', a: 'ia-homem-das-cavernacio' }, { v: 'Medicacio', a: 'ia-medicacio' }, { v: 'Acacio', a: 'ia-acacio' }], photo: 1, cap: 'ACACIA', emojis: ['🤖', '🎭', '✨'] },
       { key: 'story_samuca', tag: 'LORE DO ANO', title: 'Story do Samuca do Ano', desc: 'Qual story ficou marcado? Escolhe um.', type: 'radio', options: ['Pose c mão no bolso', 'Foto na academia', 'Foto dirigindo', 'Selfie com maxilar'], photo: 1, cap: 'SKIBIDI', emojis: ['🧍', '💪', '🚗', '🗿'] },
       { key: 'amiga_ano', tag: 'RIZZ SUPREMO', title: 'AmigA Nestlé do Ano', desc: 'A rainha da aura. Vota sem medo.', type: 'radio', options: ['Maricota', 'Feh Mel', 'Gabi Reche'], photo: 10, cap: 'RIZZ MÁXIMO', emojis: ['👑', '✨', '💅'] },
       { key: 'pior_amigo', tag: 'NPC DETECTED', title: 'Pior Amigo Nestlé do Ano', em: 'Pior', desc: 'Aura negativa. Quem foi o NPC do ano?', type: 'radio', options: TODOS, photo: 7, cap: 'NPC', emojis: ['💀', '🤡', '🥶'] },
@@ -536,7 +550,7 @@
 
     // 1: foto sozinha | 2 e 4: 2 por linha | 3, 6, 9... e qualquer coisa acima de 4: 3 por linha (3 opções ocupam a altura toda)
     function optionsClass(n) {
-      return 'options pics' + (n === 1 ? ' solo' : '') + (n === 2 ? ' duo' : '') + (n === 3 ? ' linha' : '') + (n >= 3 && n !== 4 ? ' c3' : '');
+      return 'options pics' + (n === 1 ? ' solo' : '') + (n === 2 ? ' duo' : '') + (n === 3 ? ' linha' : '') + (n >= 3 && n !== 4 ? ' c3' : '') + (n === 6 ? ' m2' : '');
     }
 
     function buildStep(cat, i) {
@@ -551,7 +565,12 @@
         ta.addEventListener('input', () => { state.answers[cat.key] = ta.value.trim(); if (ta.value.trim()) setHint(cat.key, false); });
         card.append(ta);
       } else {
-        card.append(h('div', { class: optionsClass(cat.options.length), role: 'radiogroup', 'aria-label': cat.title }, cat.options.map((o, k) => optionEl(cat, o, k))));
+        const opts = h('div', { class: optionsClass(cat.options.length), role: 'radiogroup', 'aria-label': cat.title }, cat.options.map((o, k) => optionEl(cat, o, k)));
+        const more = h('div', { class: 'more', 'aria-hidden': 'true', text: '▼ ROLA PRA VER MAIS' });
+        const wrap = h('div', { class: 'optwrap' }, opts, more);
+        wrap.upd = () => more.classList.toggle('show', opts.scrollHeight - opts.scrollTop - opts.clientHeight > 8);
+        opts.addEventListener('scroll', wrap.upd, { passive: true });
+        card.append(wrap);
       }
       card.append(h('p', { class: 'hint', id: 'hint-' + cat.key, role: 'alert', text: 'FALTOU VOTAR, SIGMA 💀' }));
 
@@ -572,6 +591,9 @@
     CATEGORIES.forEach((c, i) => stepsEl.append(buildStep(c, i)));
 
     let shownPct = 0;
+    function updMore() { const w = stepsEl.querySelector('.step.active .optwrap'); if (w) w.upd(); }
+    window.addEventListener('resize', updMore);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(updMore);
     function go(i) {
       const dir = i >= state.cur ? 1 : -1;
       state.cur = i;
@@ -596,6 +618,7 @@
         $('#aura').textContent = 'AURA ' + pct + '%';
       }
       shownPct = pct;
+      updMore();
     }
 
     // ── Nome ──────────────────────────────────────────────────────────────
