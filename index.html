@@ -23,6 +23,9 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
     [hidden] { display: none !important }
     html, body { height: 100% }
+    @supports (height: 100dvh) { html, body { height: 100dvh } }   /* barra do navegador no celular não esconde o botão */
+    html { -webkit-text-size-adjust: 100% }
+    button, .opt { touch-action: manipulation }                     /* sem atraso/zoom de duplo toque */
     body {
       background: var(--bg);
       color: #fff;
@@ -40,6 +43,7 @@
         radial-gradient(60vmax 60vmax at 100% 30%, rgba(0,229,255,.25), transparent 60%),
         radial-gradient(60vmax 60vmax at 30% 100%, rgba(198,255,0,.18), transparent 60%);
       animation: bgshift 8s ease-in-out infinite alternate;
+      will-change: filter;
     }
     body::after { /* scanlines CRT */
       content: ''; position: fixed; inset: 0; z-index: 50; pointer-events: none;
@@ -112,12 +116,16 @@
     #steps { flex: 1; min-height: 0; display: flex; flex-direction: column }
     .step { display: none }
     .step.active { flex: 1; min-height: 0; display: flex; flex-direction: column; animation: pop .3s ease both }
+    .gsap .step.active { animation: none }   /* o GSAP já anima a entrada do passo */
+    .intro .opt { transition: none }          /* sem a transição de hover brigando com o GSAP */
 
     /* ── Card: cabeçalho fixo, só a lista de opções rola (se precisar) ── */
     .card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; background: var(--card); border: 4px solid #000; box-shadow: 6px 6px 0 var(--pink); padding: 14px; margin: 0 8px 14px 0 }
     .head { flex: none; display: flow-root }
     .tag { display: inline-block; font-family: 'Bungee', sans-serif; font-size: 10px; background: var(--cyan); color: #000; padding: 3px 8px; transform: rotate(-2deg); margin-bottom: 6px }
     .qtitle { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(24px, 6.5vw, 40px); text-transform: uppercase; line-height: 1; margin-bottom: 4px }
+    .qtitle .em { display: inline-block; font-size: 1.4em; color: var(--red); text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255,77,109,.85); animation: pior 1.1s ease-in-out infinite }
+    @keyframes pior { 0%, 100% { transform: rotate(-3deg) scale(1) } 50% { transform: rotate(3deg) scale(1.08) } }
     .desc { color: var(--soft); font-size: 14px; margin-bottom: 10px }
     .sticker { float: right; width: 76px; margin: 0 0 6px 10px; transform: rotate(4deg); border: 3px solid #fff; box-shadow: 3px 3px 0 #000; background: #000; position: relative }
     .sticker img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 50% 25%; max-width: 100% }
@@ -149,9 +157,18 @@
     .options.pics .av { width: 100%; height: auto; aspect-ratio: 1; border-radius: 0; border: 0; border-bottom: 3px solid #000; font-size: 64px }
     .options.pics .nm { padding: 8px 6px; font-size: 19px }
     .options.pics .ck { position: absolute; top: 6px; right: 6px; margin: 0; padding: 3px 6px; background: var(--lime); border: 2px solid #000; transform: rotate(6deg) }
+    /* 1 ou 2 opções: as fotos esticam pra ocupar a altura que sobra, sem scroll */
+    .options.pics.duo, .options.pics.solo, .options.pics.linha { align-content: stretch; grid-template-rows: minmax(0, 1fr) }
+    .options.pics.duo .av, .options.pics.solo .av, .options.pics.linha .av { flex: 1 1 0; min-height: 0; height: auto; aspect-ratio: auto }
+    .options.pics.duo .av img, .options.pics.solo .av img, .options.pics.linha .av img { object-position: 50% 25% }
+    /* 3 por linha: 3 opções (cabem numa linha só), múltiplos de 3 e qualquer quantidade acima de 4. 2 e 4 opções ficam com 2 por linha */
+    .options.pics.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px }
+    @media (max-width: 700px) {
+      .options.pics.c3 .nm { font-size: 16px; padding: 6px 4px }
+      .options.pics.c3 .ck { font-size: 8px; padding: 2px 4px }
+    }
     .options.pics.solo { grid-template-columns: minmax(0, 260px); justify-content: center }
     @media (min-width: 900px) {
-      .options.pics.many { grid-template-columns: repeat(3, 1fr) }
       .options.pics .nm { font-size: 22px }
     }
 
@@ -159,7 +176,7 @@
     .ta:focus { box-shadow: 3px 3px 0 var(--lime) }
     .ta::placeholder { color: #a58fd0 }
 
-    .hint { flex: none; display: none; margin-top: 8px; font-family: 'Bungee', sans-serif; font-size: 11px; color: var(--red) }
+    .hint { flex: none; display: none; margin-top: 8px; font-family: 'Bungee', sans-serif; font-size: 12px; color: var(--red) }
     .hint.show { display: block; animation: shake .35s }
     .err { flex: none; display: none; margin-bottom: 12px; padding: 10px 12px; border: 3px solid #000; background: var(--red); color: #000; font-size: 15px }
     .err.show { display: block }
@@ -183,7 +200,9 @@
     .center { text-align: center; color: var(--soft); margin-bottom: 18px }
 
     .summary { display: grid; gap: 10px; padding-right: 4px }
-    .sum { background: var(--card); border: 3px solid #000; box-shadow: 3px 3px 0 var(--cyan); padding: 8px 14px; min-width: 0 }
+    .sum { display: flex; align-items: center; gap: 10px; background: var(--card); border: 3px solid #000; box-shadow: 3px 3px 0 var(--cyan); padding: 8px 14px; min-width: 0 }
+    .sum .av { width: 34px; height: 34px; font-size: 18px }
+    .sumtxt { min-width: 0 }
     .sum small { display: block; font-family: 'Bungee', sans-serif; font-size: 10px; color: var(--cyan); text-transform: uppercase }
     .sum span { display: block; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 20px; text-transform: uppercase; color: var(--yellow); overflow-wrap: anywhere }
 
@@ -196,7 +215,8 @@
     .fx { position: fixed; z-index: 100; pointer-events: none; font-size: 26px; animation: burst .9s ease-out forwards }
     .fx.txt { font-family: 'Bungee', sans-serif; font-size: 18px; color: var(--lime); text-shadow: 2px 2px 0 #000 }
     @keyframes burst { from { transform: translate(0, 0) scale(.6); opacity: 1 } to { transform: translate(var(--dx), var(--dy)) scale(1.4) rotate(var(--r)); opacity: 0 } }
-    .fall { position: fixed; top: -40px; z-index: 100; pointer-events: none; animation: fall linear forwards }
+    .fall { will-change: transform; position: fixed; top: -40px; z-index: 100; pointer-events: none; animation: fall linear forwards }
+    .fall.n67 { font-family: 'Bungee', sans-serif; color: var(--lime); text-shadow: 2px 2px 0 #000 }
     @keyframes fall { to { transform: translateY(115vh) rotate(720deg) } }
 
     /* ── Desktop: 2 colunas ── */
@@ -231,6 +251,10 @@
       .desc { margin-bottom: 8px }
       .sticker { width: 64px }
     }
+    /* celular: fundo parado (animar filtro em tela cheia pesa na bateria/GPU) */
+    @media (max-width: 700px) {
+      body::before { animation: none; will-change: auto }
+    }
     @media (max-height: 640px) {
       .ticker { display: none }
       .strip-track img { height: 44px }
@@ -264,15 +288,15 @@
         <span class="tag">IDENTIFICAÇÃO</span>
         <h2 class="qtitle">Quem é você, sigma?</h2>
         <p class="desc">Coloca seu nome pra registrar o voto. Cada um vota uma vez só.</p>
-        <input class="name-input" id="voter-name" type="text" maxlength="40" placeholder="SEU NOME" autocomplete="off" aria-label="Seu nome">
-        <p class="hint" id="hint-name">COLOCA O NOME, NPC 💀</p>
+        <input class="name-input" id="voter-name" type="text" maxlength="40" placeholder="SEU NOME" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Seu nome">
+        <p class="hint" id="hint-name" role="alert">COLOCA O NOME, NPC 💀</p>
         <div class="nav"><button class="btn btn-go" id="btn-start" type="button">Bora votar →</button></div>
       </div>
     </section>
 
     <!-- Já votou -->
     <section class="screen scroll" id="screen-voted">
-      <div class="big">Já votou!<br>+10000 aura</div>
+      <div class="big">Já votou!<br>+67000 aura</div>
       <p class="center">Seus votos tão salvos, <span id="voted-name"></span>.</p>
       <div class="summary" id="voted-summary"></div>
     </section>
@@ -288,13 +312,14 @@
 
     <!-- Fim -->
     <section class="screen scroll" id="screen-done">
-      <div class="big">Voto registrado!<br>+99999 aura 🗿</div>
-      <p class="center">Valeu por votar. A cerimônia vai revelar os vencedores.</p>
+      <div class="big" id="done-big">Voto registrado!<br><span id="aura-count">+67000</span> aura 🗿</div>
+      <p class="center">Valeu por votar. A cerimônia vai revelar os vencedores. 6️⃣7️⃣🤷</p>
       <div class="summary" id="done-summary"></div>
       <div class="gallery" id="gallery"></div>
     </section>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script>
   (function () {
     'use strict';
@@ -308,34 +333,52 @@
     // ex.: Eric -> img/avatars/eric.jpg | "Júlio e Allana" -> img/avatars/julio-e-allana.jpg
     // Se o arquivo não existir, aparece um emoji no lugar.
     const AVATAR_DIR = 'img/avatars/';
+    // Faixa do topo: as fotos p01-p13 + todas as fotos individuais (a lista tem que acompanhar a pasta img/avatars)
+    const AVATAR_FILES = [
+      'acacio', 'bet-do-samuca', 'braga', 'davi', 'dodo', 'eric',
+      'feh-mel', 'flores', 'foto-dirigindo', 'foto-na-academia', 'gabi-reche', 'gsantos',
+      'gsantos-e-lucas', 'henricao', 'iris-seguindo-nois', 'joao-calado', 'joe', 'julio',
+      'julio-e-allana', 'leo-e-degaut', 'leomo', 'live-avaliando-insta', 'lucas', 'luiz',
+      'luiz-poncho', 'maricota', 'neguinho', 'pedro-neves', 'piscini', 'piscininha',
+      'pose-c-mao-no-bolso', 'reche', 'reche-e-gabi', 'samuel', 'samuel-e-acacio', 'samuel-e-feh-mel',
+      'selfie-com-maxilar', 'unfollow-do-sam-na-feh', 'victinho',
+      'ia-original', 'ia-emacio', 'ia-baldacio', 'ia-fazendacio', 'ia-mineracio', 'ia-gordacio', 'ia-homem-das-cavernacio', 'ia-medicacio', 'ia-acacio'];
+    const thumb = (p) => 'img/thumbs/' + p.split('/').pop();   // miniaturas da faixa (gerar em img/thumbs ao adicionar foto)
+    const LARP_PHOTOS = ['img/larp1.jpg', 'img/larp2.jpg', 'img/larp3.jpg'];   // memes de larp (só na faixa)
+    const STRIP_PHOTOS = PHOTOS.concat(AVATAR_FILES.map((f) => AVATAR_DIR + f + '.jpg'), LARP_PHOTOS);
 
     const TODOS = ['Acácio', 'Braga', 'Eric', 'Henricão', 'João Calado', 'Joe', 'Neguinho', 'Lucas', 'Luiz', 'Gsantos',
       'Pedro Neves', 'Reche', 'Samuel', 'Flores', 'Davi', 'Dodo', 'Júlio', 'LeoMo', 'Victinho'];
 
-    // photo = nº da foto (1-12) usada como sticker na categoria
-    // options: texto, ou { v: valor salvo, l: texto exibido }
+    // photo = nº da foto (1-13) usada como sticker na categoria
+    // options: texto, ou { v: valor salvo, l: texto exibido, a: nome do arquivo em img/avatars (sem .jpg) }
+    // A ordem desta lista é a ordem das telas.
     const CATEGORIES = [
-      { key: 'amigo_ano', tag: 'AURA INFINITA', title: 'Amigo Nestlé do Ano', desc: 'Quem tem mais aura no grupo? Só um sigma leva a taça.', type: 'radio', options: TODOS, photo: 1, cap: 'AURA +9999', emojis: ['🗿', '🐐', '🔥', '😎'] },
-      { key: 'amiga_ano', tag: 'RIZZ SUPREMO', title: 'AmigA Nestlé do Ano', desc: 'A rainha da aura. Vota sem medo.', type: 'radio', options: ['Maricota', 'Feh Mel', 'Gabi Reche'], photo: 10, cap: 'RIZZ MÁXIMO', emojis: ['👑', '✨', '💅'] },
-      { key: 'golden_boy', tag: 'MEWING LVL 100', title: 'Golden Boy', desc: 'Flores ou Eric. Escolhe sem pensar.', type: 'radio', options: ['Flores', 'Eric'], photo: 6, cap: 'MEWING', emojis: ['🌟', '🏅'] },
-      { key: 'pior_amigo', tag: 'NPC DETECTED', title: 'Pior Amigo Nestlé do Ano', desc: 'Aura negativa. Quem foi o NPC do ano?', type: 'radio', options: TODOS, photo: 7, cap: 'NPC', emojis: ['💀', '🤡', '🥶'] },
-      { key: 'resenha_ano', tag: 'ARQUIVO CLASSIFICADO', title: 'Resenha do Ano', desc: 'Qual resenha entrou pra história? Escolhe o rolê.', type: 'radio', options: ['Unfollow do Sam na Feh', 'Live avaliando insta', 'Iris seguindo nois', 'Bet do Samuca', 'Piscininha'], photo: 10, cap: 'LORE DROP', emojis: ['📉', '📱', '👀', '🎰', '🏊'] },
-      { key: 'premio_ceo', tag: 'CEO MODE', title: 'Prêmio CEO', desc: 'Candidato único. Confirma o voto.', type: 'radio', options: ['Luiz, obviamente', 'Luiz (mas com dúvidas)', 'Luiz (sem dúvida nenhuma)'], photo: 7, cap: 'SIGMA GRINDSET', emojis: ['👔', '🤔', '🏆'], avatarFor: () => 'luiz' },
-      { key: 'story_samuca', tag: 'LORE DO ANO', title: 'Story do Samuca do Ano', desc: 'Qual story ficou marcado? Escolhe um.', type: 'radio', options: ['Pose c mão no bolso', 'Foto na academia', 'Foto dirigindo', 'Selfie com maxilar'], photo: 1, cap: 'SKIBIDI', emojis: ['🧍', '💪', '🚗', '🗿'] },
-      { key: 'premio_neve', tag: 'MODO GELO', title: 'Prêmio Neve do Ano', desc: 'Escolhe a dupla.', type: 'radio', options: [{ v: 'Gsantos e Lucas', l: 'Gsantos × Lucas' }, { v: 'Samuel e Acácio', l: 'Samuel × Acácio' }], photo: 7, cap: 'NÍVEL OHIO', emojis: ['🥶', '🧊'] },
+      { key: 'premio_saka', tag: 'SAKA MODE', title: 'Prêmio SAKA', desc: 'O prêmio mais inútil da noite. Pra quem não vê nada, só aparece pra falar que tem e participa só pra dizer que participou.', type: 'radio', options: ['Henricão', 'Joe', 'Dodo'], photo: 6, cap: 'SAKA', emojis: ['😎'] },
+      { key: 'premio_ceo', tag: 'CEO MODE', title: 'Prêmio CEO', desc: 'Escolhe o Luiz que vai levar.', type: 'radio', options: [{ v: 'Luiz, obviamente', a: 'luiz' }, { v: 'Luiz (mas com dúvidas)', a: 'luiz-poncho' }], photo: 7, cap: 'SIGMA GRINDSET', emojis: ['👔', '🤔'] },
       { key: 'premio_piscineira', tag: 'MODO PISCINA', title: 'Prêmio Piscineira', desc: 'Candidato único. Confirma o voto.', type: 'radio', options: ['Piscini'], photo: 6, cap: 'FANUM TAX', emojis: ['🏊'] },
-      { key: 'fioti_ano', tag: 'CRINGE LVL MÁXIMO', title: 'Fioti do Ano', desc: 'Escolhe um dos três.', type: 'radio', options: ['João Calado', 'Eric', 'Samuel'], photo: 10, cap: 'CRINGE', emojis: ['🤡', '💀', '🗿'] },
       { key: 'casal_ano', tag: 'ROMANCE ARC', title: 'Casal do Ano', desc: 'Vota no ship do ano.', type: 'radio', options: ['Júlio e Allana', 'Léo e Degaut', 'Samuel e Feh Mel', 'Reche e Gabi'], photo: 1, cap: 'TÁ LIBERADO', emojis: ['💍', '💘', '🫶', '🔥'] },
+      { key: 'golden_boy', tag: 'MEWING LVL 100', title: 'Golden Boy', desc: 'Flores ou Eric. Escolhe sem pensar.', type: 'radio', options: ['Flores', 'Eric'], photo: 6, cap: 'MEWING', emojis: ['🌟', '🏅'] },
+      { key: 'fioti_ano', tag: 'CRINGE LVL MÁXIMO', title: 'Fioti do Ano', desc: 'Escolhe um dos três.', type: 'radio', options: ['João Calado', 'Eric', 'Samuel'], photo: 10, cap: 'CRINGE', emojis: ['🤡', '💀', '🗿'] },
+      { key: 'resenha_ano', tag: 'ARQUIVO CLASSIFICADO', title: 'Resenha do Ano', desc: 'Qual resenha entrou pra história? Escolhe o rolê.', type: 'radio', options: ['Unfollow do Sam na Feh', 'Live avaliando insta', 'Iris seguindo nois', 'Bet do Samuca', 'Piscininha', 'Maquinhos de olho da A3'], photo: 10, cap: 'LORE DROP', emojis: ['📉', '📱', '👀', '🎰', '🏊', '👁️'] },
+      { key: 'versao_acacio', tag: 'MULTIVERSO', title: 'Versão do AcacIA', em: 'IA', desc: 'Qual versão do Acácio foi a melhor? Escolhe uma.', type: 'radio', options: [{ v: 'Niggacio', a: 'ia-original' }, { v: 'Emacio', a: 'ia-emacio' }, { v: 'Baldacio', a: 'ia-baldacio' }, { v: 'Fazendacio', a: 'ia-fazendacio' }, { v: 'Mineracio', a: 'ia-mineracio' }, { v: 'Gordacio', a: 'ia-gordacio' }, { v: 'Homem das cavernacio', a: 'ia-homem-das-cavernacio' }, { v: 'Medicacio', a: 'ia-medicacio' }, { v: 'Acacio', a: 'ia-acacio' }], photo: 1, cap: 'ACACIA', emojis: ['🤖', '🎭', '✨'] },
+      { key: 'story_samuca', tag: 'LORE DO ANO', title: 'Story do Samuca do Ano', desc: 'Qual story ficou marcado? Escolhe um.', type: 'radio', options: ['Pose c mão no bolso', 'Foto na academia', 'Foto dirigindo', 'Selfie com maxilar'], photo: 1, cap: 'SKIBIDI', emojis: ['🧍', '💪', '🚗', '🗿'] },
+      { key: 'amiga_ano', tag: 'RIZZ SUPREMO', title: 'AmigA Nestlé do Ano', desc: 'A rainha da aura. Vota sem medo.', type: 'radio', options: ['Maricota', 'Feh Mel', 'Gabi Reche'], photo: 10, cap: 'RIZZ MÁXIMO', emojis: ['👑', '✨', '💅'] },
+      { key: 'pior_amigo', tag: 'NPC DETECTED', title: 'Pior Amigo Nestlé do Ano', em: 'Pior', desc: 'Aura negativa. Quem foi o NPC do ano?', type: 'radio', options: TODOS, photo: 7, cap: 'NPC', emojis: ['💀', '🤡', '🥶'] },
+      { key: 'amigo_ano', tag: 'AURA INFINITA', title: 'Amigo Nestlé do Ano', desc: 'Quem tem mais aura no grupo? Só um sigma leva a taça.', type: 'radio', options: TODOS, photo: 1, cap: 'AURA +9999', emojis: ['🗿', '🐐', '🔥', '😎'] },
+      { key: 'premio_neve', tag: 'MODO GELO', title: 'Prêmio Neve do Ano', desc: 'Escolhe a dupla.', type: 'radio', options: [{ v: 'Gsantos e Lucas', l: 'Gsantos × Lucas' }, { v: 'Samuel e Acácio', l: 'Samuel × Acácio' }], photo: 7, cap: 'NÍVEL OHIO', emojis: ['🥶', '🧊'] },
     ];
 
-    const TICKER = ['NESTLÉ', 'AURA', 'SIGMA', 'OHIO', 'SKIBIDI', 'FANUM TAX', 'RIZZ', 'MEWING', 'NPC', 'TÁ LIBERADO'];
+    const TICKER = ['NESTLÉ', 'AURA', 'SIGMA', 'OHIO', 'SKIBIDI', 'FANUM TAX', 'RIZZ', 'MEWING', 'NPC', 'TÁ LIBERADO', 'SIX SEVEN', '67', 'MANGO', 'DOOT DOOT', 'LARP', 'TUNG TUNG SAHUR', 'NO LIMIT TO THE LARP', 'SAHUR'];
     // ════════════════════════════════════════════════════════════════════════
 
-    const LS_KEY = 'nestle' + ANO + '_vote';
+    const LS_KEY = 'nestle' + ANO + '_v2_vote';   // trocar o sufixo (v3, v4...) libera todo mundo pra votar de novo
     const N = CATEGORIES.length;
     const state = { cur: 0, nome: '', answers: {} };
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const $ = (s) => document.querySelector(s);
+    const G = !reduce && window.gsap;   // sem GSAP (CDN fora) ou com movimento reduzido: fica só o CSS
+    if (G) document.documentElement.classList.add('gsap');
 
     function h(tag, attrs, ...kids) {
       const e = document.createElement(tag);
@@ -359,42 +402,47 @@
     // Faixa de fotos: ordem aleatória, sem repetir a mesma foto nas 3 seguintes, rolagem infinita
     (function initStrip() {
       const ratios = [];
-      let pending = PHOTOS.length;
+      let pending = STRIP_PHOTOS.length;
       const recent = [];
       const SPEED = 60; // px/s
+      const GAP = 4;
+      const queue = []; // proporção de cada foto que está na faixa, na ordem (evita ler o layout a cada frame)
       function pick() {
-        const pool = PHOTOS.map((_, i) => i).filter((i) => !recent.includes(i));
+        const pool = STRIP_PHOTOS.map((_, i) => i).filter((i) => !recent.includes(i));
         const i = pool[Math.floor(Math.random() * pool.length)];
         recent.push(i); if (recent.length > 3) recent.shift();
         return i;
       }
       function mk() {
         const i = pick();
-        return h('img', { src: PHOTOS[i], alt: '', style: 'aspect-ratio:' + ratios[i] });
+        queue.push(ratios[i]);
+        return h('img', { src: thumb(STRIP_PHOTOS[i]), alt: '', decoding: 'async', style: 'aspect-ratio:' + ratios[i] });
       }
       function start() {
-        let offset = 0, last = performance.now();
-        const view = () => strip.parentElement.clientWidth;
+        let offset = 0, last = performance.now(), H = 60, view = strip.parentElement.clientWidth;
+        const widthOf = (r) => r * H + GAP;
+        const measure = () => { const im = strip.firstElementChild; if (im) H = im.clientHeight || H; view = strip.parentElement.clientWidth; };
+        strip.append(mk());
+        measure();
         const fill = () => {
-          while (strip.scrollWidth - offset < view() * 2 + 400) strip.append(mk());
+          let t = queue.reduce((a, r) => a + widthOf(r), 0);
+          while (t - offset < view * 2 + 400) { strip.append(mk()); t += widthOf(queue[queue.length - 1]); }
         };
         fill();
+        window.addEventListener('resize', measure);
         function frame(now) {
-          offset += (now - last) / 1000 * SPEED; last = now;
-          let first = strip.firstElementChild;
-          while (first && offset >= first.offsetWidth + 4) {
-            offset -= first.offsetWidth + 4; first.remove(); first = strip.firstElementChild;
-          }
+          offset += Math.min(now - last, 100) / 1000 * SPEED; last = now;
+          while (queue.length > 1 && offset >= widthOf(queue[0])) { offset -= widthOf(queue.shift()); strip.firstElementChild.remove(); }
           fill();
-          strip.style.transform = 'translateX(' + (-offset) + 'px)';
+          strip.style.transform = 'translate3d(' + (-offset) + 'px,0,0)';
           requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
       }
-      PHOTOS.forEach((p, i) => {
+      STRIP_PHOTOS.forEach((p, i) => {
         const im = new Image();
         const done = () => { ratios[i] = im.naturalWidth && im.naturalHeight ? im.naturalWidth / im.naturalHeight : 1; if (!--pending) start(); };
-        im.onload = done; im.onerror = done; im.src = p;
+        im.onload = done; im.onerror = done; im.src = thumb(p);
       });
     })();
     const tk = TICKER.join('  •  ') + '  •  ';
@@ -405,12 +453,15 @@
       document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
       $('#screen-' + name).classList.add('active');
       $('#screen-' + name).scrollTop = 0;
+      if (G && (name === 'done' || name === 'voted')) {
+        G.from('#screen-' + name + ' .sum', { x: -30, opacity: 0, duration: .3, stagger: .035, delay: .1, ease: 'power2.out', clearProps: 'transform,opacity' });
+      }
     }
 
     // ── Efeitos ───────────────────────────────────────────────────────────
     function burst(x, y) {
       if (reduce) return;
-      const em = ['💀', '🗿', '🔥', '✨', '😭', '🐐'];
+      const em = ['💀', '🗿', '🔥', '✨', '😭', '🐐', '🤷', '6️⃣7️⃣', '🥁', '🪵'];
       for (let i = 0; i < 8; i++) {
         const f = h('span', { class: 'fx', text: em[Math.floor(Math.random() * em.length)] });
         const a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 70;
@@ -421,7 +472,7 @@
         f.addEventListener('animationend', () => f.remove());
         document.body.append(f);
       }
-      const t = h('span', { class: 'fx txt', text: '+AURA' });
+      const t = h('span', { class: 'fx txt', text: ['+67 AURA', 'SIX SEVEN', '67!', '+AURA', 'LARP!', 'SAHUR!'][Math.floor(Math.random() * 6)] });
       t.style.left = (x - 24) + 'px'; t.style.top = (y - 20) + 'px';
       t.style.setProperty('--dx', '0px'); t.style.setProperty('--dy', '-60px'); t.style.setProperty('--r', '0deg');
       t.addEventListener('animationend', () => t.remove());
@@ -429,9 +480,11 @@
     }
     function confetti() {
       if (reduce) return;
-      const em = ['🎉', '🗿', '💀', '🔥', '🏆', '✨', '🐐', '🪺'];
-      for (let i = 0; i < 40; i++) {
-        const f = h('span', { class: 'fall', text: em[i % em.length] });
+      const em = ['🎉', '🗿', '💀', '🔥', '🏆', '✨', '🐐', '🪺', '🤷', '6️⃣7️⃣', '🥁', '🪵'];
+      const n = innerWidth < 700 ? 24 : 36;
+      for (let i = 0; i < n; i++) {
+        const word = i % 10 === 0 ? '67' : i % 10 === 5 ? 'LARP' : null;
+        const f = h('span', { class: 'fall' + (word ? ' n67' : ''), text: word || em[i % em.length] });
         f.style.left = Math.random() * 100 + 'vw';
         f.style.fontSize = 20 + Math.random() * 20 + 'px';
         f.style.animationDuration = 2.5 + Math.random() * 2.5 + 's';
@@ -454,12 +507,13 @@
     // ── Montagem dos passos ───────────────────────────────────────────────
     function optionEl(cat, o, k) {
       const v = typeof o === 'string' ? o : o.v;
-      const l = typeof o === 'string' ? o : o.l;
+      const l = typeof o === 'string' ? o : (o.l || o.v);
       const emoji = (cat.emojis || ['🗿'])[k % (cat.emojis || ['🗿']).length];
       const b = h('button', { type: 'button', class: 'opt', role: 'radio', 'aria-checked': 'false', 'data-val': v },
-        avatar(v, emoji, cat.avatarFor && cat.avatarFor(v)), h('span', { class: 'nm', text: l }), h('span', { class: 'ck', text: 'AURA +500' }));
+        avatar(v, emoji, typeof o === 'string' ? null : o.a), h('span', { class: 'nm', text: l }), h('span', { class: 'ck', text: 'AURA +67' }));
       b.addEventListener('click', (ev) => {
         b.parentElement.querySelectorAll('.opt').forEach((x) => x.setAttribute('aria-checked', x === b ? 'true' : 'false'));
+        if (G) G.fromTo(b.firstChild, { scale: 1.25, rotation: -10 }, { scale: 1, rotation: 0, duration: .45, ease: 'elastic.out(1, .5)', clearProps: 'transform' });
         state.answers[cat.key] = v;
         setHint(cat.key, false);
         const r = b.getBoundingClientRect();
@@ -473,21 +527,33 @@
 
     function setHint(key, on) { const e = $('#hint-' + key); if (e) e.classList.toggle('show', on); }
 
+    // título com a palavra `em` (se houver) em destaque
+    function titleKids(cat) {
+      const k = cat.em ? cat.title.indexOf(cat.em) : -1;
+      if (k < 0) return cat.title;
+      return [cat.title.slice(0, k), h('span', { class: 'em', text: cat.em }), cat.title.slice(k + cat.em.length)];
+    }
+
+    // 1: foto sozinha | 2 e 4: 2 por linha | 3, 6, 9... e qualquer coisa acima de 4: 3 por linha (3 opções ocupam a altura toda)
+    function optionsClass(n) {
+      return 'options pics' + (n === 1 ? ' solo' : '') + (n === 2 ? ' duo' : '') + (n === 3 ? ' linha' : '') + (n >= 3 && n !== 4 ? ' c3' : '');
+    }
+
     function buildStep(cat, i) {
       const last = i === N - 1;
       const card = h('div', { class: 'card' }, h('div', { class: 'head' },
         h('div', { class: 'sticker' }, h('img', { src: PHOTOS[cat.photo - 1], alt: '' }), h('b', { text: cat.cap })),
         h('span', { class: 'tag', text: cat.tag }),
-        h('h2', { class: 'qtitle', text: cat.title }),
+        h('h2', { class: 'qtitle' }, titleKids(cat)),
         h('p', { class: 'desc', text: cat.desc })));
       if (cat.type === 'text') {
         const ta = h('textarea', { class: 'ta', rows: '4', maxlength: '400', placeholder: cat.placeholder || '', 'aria-label': cat.title });
         ta.addEventListener('input', () => { state.answers[cat.key] = ta.value.trim(); if (ta.value.trim()) setHint(cat.key, false); });
         card.append(ta);
       } else {
-        card.append(h('div', { class: 'options pics' + (cat.options.length > 4 ? ' many' : '') + (cat.options.length === 1 ? ' solo' : ''), role: 'radiogroup', 'aria-label': cat.title }, cat.options.map((o, k) => optionEl(cat, o, k))));
+        card.append(h('div', { class: optionsClass(cat.options.length), role: 'radiogroup', 'aria-label': cat.title }, cat.options.map((o, k) => optionEl(cat, o, k))));
       }
-      card.append(h('p', { class: 'hint', id: 'hint-' + cat.key, text: 'FALTOU VOTAR, SIGMA 💀' }));
+      card.append(h('p', { class: 'hint', id: 'hint-' + cat.key, role: 'alert', text: 'FALTOU VOTAR, SIGMA 💀' }));
 
       const nav = h('div', { class: 'nav' });
       if (i > 0) { const b = h('button', { type: 'button', class: 'btn btn-back', 'aria-label': 'Voltar', text: '←' }); b.addEventListener('click', () => go(i - 1)); nav.append(b); }
@@ -498,21 +564,38 @@
       });
       nav.append(go_);
       const step = h('div', { class: 'step' }, card, nav);
-      if (last) step.insertBefore(h('div', { class: 'err', id: 'err' }), nav);
+      if (last) step.insertBefore(h('div', { class: 'err', id: 'err', role: 'alert' }), nav);
       return step;
     }
 
     const stepsEl = $('#steps');
     CATEGORIES.forEach((c, i) => stepsEl.append(buildStep(c, i)));
 
+    let shownPct = 0;
     function go(i) {
+      const dir = i >= state.cur ? 1 : -1;
       state.cur = i;
       [...stepsEl.children].forEach((s, k) => s.classList.toggle('active', k === i));
-      stepsEl.children[i].querySelectorAll('.options, .ta').forEach((e) => { e.scrollTop = 0; });
+      const step = stepsEl.children[i];
+      step.querySelectorAll('.options, .ta').forEach((e) => { e.scrollTop = 0; });
       const pct = Math.round(i / N * 100);
       $('#fill').style.width = pct + '%';
-      $('#aura').textContent = 'AURA ' + pct + '%';
       $('#cnt').textContent = (i + 1) + '/' + N;
+      if (G) {
+        const o = { p: shownPct };
+        G.to(o, { p: pct, duration: .5, ease: 'power2.out', overwrite: true, onUpdate: () => { $('#aura').textContent = 'AURA ' + Math.round(o.p) + '%'; } });
+        const parts = step.querySelectorAll('.card, .sticker, .opt');
+        G.killTweensOf(parts);
+        G.set(parts, { clearProps: 'transform,opacity' });
+        const opts = step.querySelectorAll('.opt');
+        step.classList.add('intro');
+        G.from(step.querySelector('.card'), { x: 40 * dir, opacity: 0, duration: .3, ease: 'power3.out', clearProps: 'transform,opacity' });
+        G.from(step.querySelectorAll('.sticker'), { scale: 0, rotation: -30, duration: .45, ease: 'back.out(2)', clearProps: 'transform' });
+        G.from(opts, { y: 16, scale: .94, opacity: 0, duration: .28, stagger: Math.min(.04, .24 / opts.length), ease: 'power2.out', clearProps: 'transform,opacity', onComplete: () => step.classList.remove('intro') });
+      } else {
+        $('#aura').textContent = 'AURA ' + pct + '%';
+      }
+      shownPct = pct;
     }
 
     // ── Nome ──────────────────────────────────────────────────────────────
@@ -532,7 +615,12 @@
       box.textContent = '';
       for (const cat of CATEGORIES) {
         if (!data[cat.key]) continue;
-        box.append(h('div', { class: 'sum' }, h('small', { text: cat.title }), h('span', { text: data[cat.key] })));
+        const v = data[cat.key];
+        const k = Math.max(0, cat.options.findIndex((o) => (typeof o === 'string' ? o : o.v) === v));
+        const opt = cat.options[k];
+        const emoji = (cat.emojis || ['🗿'])[k % (cat.emojis || ['🗿']).length];
+        box.append(h('div', { class: 'sum' }, avatar(v, emoji, typeof opt === 'string' ? null : opt.a),
+          h('div', { class: 'sumtxt' }, h('small', { text: cat.title }), h('span', { text: v }))));
       }
     }
 
@@ -561,6 +649,13 @@
       PHOTOS.forEach((p) => g.append(h('img', { src: p, alt: '', loading: 'lazy' })));
       showScreen('done');
       confetti();
+      if (G) {
+        const o = { v: 0 }, el = $('#aura-count');
+        el.textContent = '+0';
+        G.from('#done-big', { scale: 0, rotation: -8, duration: .6, ease: 'elastic.out(1, .5)', clearProps: 'transform' });
+        G.to(o, { v: 67000, duration: 1.8, ease: 'power2.out', onUpdate: () => { el.textContent = '+' + Math.round(o.v); } });
+        G.from('#gallery img', { scale: 0, opacity: 0, duration: .3, delay: .3, stagger: .025, ease: 'power2.out', clearProps: 'transform,opacity' });
+      }
     }
 
     // ── Início: já votou neste aparelho? ──────────────────────────────────
